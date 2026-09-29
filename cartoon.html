@@ -1,0 +1,343 @@
+<title>Smooth Flow Group Cartoon</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@600;800&display=swap">
+<style>
+/* Layout: one 16:9 stage centred on the page, controls beneath. Scenes stack inside the stage and fade in/out on a 40s timeline. */
+:root{
+  --bg:#f3efe6; --fg:#22303a; --muted:#6b7680; --panel:#ffffff; --line:#d9d2c4;
+  --orange:#ff7a1a; --teal:#1a8fa8; --sky:#bfe6f5; --sky2:#e8f6fc; --grass:#7fbf4d; --grass2:#5a9c33;
+  --earth:#c58b4c; --earth2:#8a5a2c; --river:#3aa0c9; --river2:#1f6f93; --road:#4b5057; --ink:#22303a;
+  --display:'Fredoka','Nunito',system-ui,sans-serif; --body:'Nunito',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171c21;--fg:#eef1f3;--muted:#9aa5ae;--panel:#232a31;--line:#343d46;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#171c21;--fg:#eef1f3;--muted:#9aa5ae;--panel:#232a31;--line:#343d46;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);padding-block:20px;padding-inline:16px}
+.wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(20px,3vw,28px);margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0;font-size:14px}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;border-radius:14px;overflow:hidden;background:var(--sky);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.scene{position:absolute;inset:0;opacity:0;transition:opacity .5s;pointer-events:none}
+.scene.active{opacity:1}
+.scene svg{width:100%;height:100%;display:block}
+.cap{position:absolute;left:4%;right:4%;bottom:6%;text-align:center;font-family:var(--display);font-weight:700;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.35);font-size:clamp(14px,3.4vw,32px);line-height:1.15;text-wrap:balance}
+.cap small{display:block;font-family:var(--body);font-weight:800;font-size:.55em;opacity:.95;margin-top:.3em;letter-spacing:.02em}
+.tag{position:absolute;top:5%;left:4%;background:var(--orange);color:#fff;font-family:var(--display);font-weight:700;font-size:clamp(11px,1.8vw,16px);padding:.35em .8em;border-radius:999px;letter-spacing:.04em;text-transform:uppercase}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(20,30,40,.45);cursor:pointer;transition:opacity .3s}
+.overlay[hidden]{display:none}
+.play{width:88px;height:88px;border-radius:50%;background:var(--orange);display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.play svg{width:40px;height:40px}
+.controls{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+button.btn{font:inherit;font-weight:800;border:0;background:var(--orange);color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer}
+button.btn.ghost{background:var(--teal)}
+button.btn:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.bar{flex:1;height:8px;background:var(--line);border-radius:999px;overflow:hidden;min-width:0}
+.fill{height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--orange))}
+.time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;min-width:6ch;text-align:right}
+.notes{font-size:13px;color:var(--muted);margin:0}
+
+/* ---- animations, started when a scene gets .active ---- */
+.active .rise{animation:rise .8s cubic-bezier(.2,.9,.3,1.2) both}
+.active .pop{animation:pop .6s cubic-bezier(.2,.9,.3,1.4) both}
+.active .d1{animation-delay:.3s}.active .d2{animation-delay:.6s}.active .d3{animation-delay:.9s}.active .d4{animation-delay:1.2s}.active .d5{animation-delay:1.5s}
+.active .drive{animation:drive 6s linear both}
+.active .drive-slow{animation:drive 7s ease-in-out both}
+.active .bob{animation:bob 1.6s ease-in-out infinite}
+.active .wave{animation:wave 1.2s ease-in-out infinite alternate}
+.active .spin{animation:spin 1.2s linear infinite;transform-origin:center;transform-box:fill-box}
+.active .flash{animation:flash .8s steps(2) infinite}
+.active .blink{animation:blink 1s steps(2) infinite}
+.active .jet{animation:jet .35s linear infinite}
+.active .pulse{animation:pulse 1.4s ease-in-out infinite}
+.active .swing{animation:swing 2.4s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+.active .arm{animation:arm 3s ease-in-out infinite;transform-origin:left center;transform-box:fill-box}
+.active .cloud{animation:cloud 40s linear infinite}
+.active .sun{animation:spin 30s linear infinite;transform-origin:center;transform-box:fill-box}
+.active .rope{animation:rope 3s ease-in-out both}
+.active .lift{animation:lift 3s ease-in-out both}
+.active .draw{stroke-dasharray:600;stroke-dashoffset:600;animation:draw 2.4s ease-out 1s both}
+.active .type{animation:rise .8s .4s both}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+@keyframes drive{from{transform:translateX(-45%)}to{transform:translateX(35%)}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-6px) rotate(1.5deg)}}
+@keyframes wave{from{transform:translateX(0)}to{transform:translateX(-18px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes flash{0%{opacity:1}100%{opacity:.15}}
+@keyframes blink{0%{opacity:1}100%{opacity:0}}
+@keyframes jet{from{stroke-dashoffset:0}to{stroke-dashoffset:-24}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.5);opacity:.2}}
+@keyframes swing{0%,100%{transform:rotate(-25deg)}50%{transform:rotate(20deg)}}
+@keyframes arm{0%,100%{transform:rotate(0)}50%{transform:rotate(-18deg)}}
+@keyframes cloud{from{transform:translateX(0)}to{transform:translateX(-300px)}}
+@keyframes rope{from{transform:translateY(0)}to{transform:translateY(-70px)}}
+@keyframes lift{from{transform:translateY(60px) rotate(8deg)}to{transform:translateY(0) rotate(0)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.active *{animation-duration:.01s!important;animation-iteration-count:1!important}}
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Smooth Flow Group — 40 second cartoon</h1>
+    <p class="sub">The group, its divisions, and the work each one does. Press play.</p>
+  </div>
+
+  <div class="stage" id="stage">
+
+    <!-- SCENE 1: Title, Riverland landscape -->
+    <div class="scene" data-start="0" data-end="6" data-vo="Meet Smooth Flow Group. Based in Berri, in South Australia's Riverland, we're a family of civil companies working right across the state.">
+      <svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3f0"/><stop offset="1" stop-color="#eaf7fd"/></linearGradient></defs>
+        <rect width="960" height="540" fill="url(#sky)"/>
+        <g class="sun"><circle cx="800" cy="110" r="52" fill="#ffd23f"/><g stroke="#ffd23f" stroke-width="8" stroke-linecap="round"><line x1="800" y1="30" x2="800" y2="48"/><line x1="800" y1="172" x2="800" y2="190"/><line x1="720" y1="110" x2="738" y2="110"/><line x1="862" y1="110" x2="880" y2="110"/><line x1="744" y1="54" x2="756" y2="66"/><line x1="844" y1="154" x2="856" y2="166"/><line x1="744" y1="166" x2="756" y2="154"/><line x1="844" y1="66" x2="856" y2="54"/></g></g>
+        <g class="cloud" fill="#fff" opacity=".9"><ellipse cx="220" cy="120" rx="70" ry="28"/><ellipse cx="260" cy="100" rx="50" ry="30"/><ellipse cx="560" cy="160" rx="60" ry="22"/><ellipse cx="590" cy="145" rx="40" ry="24"/><ellipse cx="1120" cy="120" rx="70" ry="28"/></g>
+        <path d="M0 330 Q240 260 480 320 T960 300 V540 H0Z" fill="#8fc75c"/>
+        <path d="M0 400 Q300 360 600 410 T960 390 V540 H0Z" fill="#5a9c33"/>
+        <!-- river -->
+        <path d="M0 470 Q200 430 420 470 T960 460 V540 H0Z" fill="#3aa0c9"/>
+        <g class="wave" stroke="#8fd7ef" stroke-width="5" stroke-linecap="round" fill="none"><path d="M60 495 q20 -10 40 0 t40 0 t40 0"/><path d="M420 505 q20 -10 40 0 t40 0 t40 0"/><path d="M760 490 q20 -10 40 0 t40 0 t40 0"/></g>
+        <!-- gum trees -->
+        <g class="pop d1"><rect x="120" y="290" width="14" height="80" fill="#8a5a2c"/><circle cx="127" cy="270" r="40" fill="#4f8a3a"/><circle cx="100" cy="290" r="26" fill="#63a34a"/><circle cx="156" cy="288" r="26" fill="#63a34a"/></g>
+        <g class="pop d2"><rect x="690" y="300" width="14" height="80" fill="#8a5a2c"/><circle cx="697" cy="278" r="44" fill="#4f8a3a"/><circle cx="668" cy="300" r="26" fill="#63a34a"/><circle cx="728" cy="298" r="26" fill="#63a34a"/></g>
+        <!-- vine rows -->
+        <g class="rise d3" stroke="#3f7a28" stroke-width="6" stroke-linecap="round"><line x1="260" y1="360" x2="440" y2="345"/><line x1="270" y1="380" x2="450" y2="365"/><line x1="280" y1="400" x2="460" y2="385"/></g>
+        <!-- truck on road -->
+        <path d="M0 430 Q300 400 600 445 T960 430" stroke="#4b5057" stroke-width="26" fill="none"/>
+        <g class="drive">
+          <g transform="translate(300 380)">
+            <rect x="0" y="12" width="120" height="40" rx="6" fill="#ff7a1a"/>
+            <rect x="120" y="0" width="52" height="52" rx="8" fill="#1a8fa8"/>
+            <rect x="130" y="8" width="30" height="20" rx="4" fill="#cfefff"/>
+            <text x="60" y="40" font-family="Fredoka" font-weight="700" font-size="16" fill="#fff" text-anchor="middle">SMOOTH FLOW</text>
+            <circle cx="30" cy="56" r="12" fill="#22303a" class="spin"/><circle cx="90" cy="56" r="12" fill="#22303a" class="spin"/><circle cx="150" cy="56" r="12" fill="#22303a" class="spin"/>
+          </g>
+        </g>
+        <!-- title card -->
+        <g class="pop">
+          <rect x="180" y="60" width="600" height="150" rx="24" fill="#22303a" opacity=".92"/>
+          <text x="480" y="122" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="54" fill="#fff">Smooth Flow Group</text>
+          <text x="480" y="172" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="24" fill="#ffd23f">Berri, Riverland · South Australia</text>
+        </g>
+      </svg>
+      <div class="cap type">A family of civil companies, working all over SA.</div>
+    </div>
+
+    <!-- SCENE 2: The group overview -->
+    <div class="scene" data-start="6" data-end="12" data-vo="One group, one phone call, the whole job. Traffic management, hydro excavation, civil construction, and marine services, all under one roof.">
+      <svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="960" height="540" fill="#1a8fa8"/>
+        <circle cx="480" cy="230" r="86" fill="#ff7a1a" class="pop"/>
+        <text x="480" y="222" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="26" fill="#fff" class="pop">SMOOTH</text>
+        <text x="480" y="254" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="26" fill="#fff" class="pop">FLOW</text>
+        <g stroke="#ffd23f" stroke-width="6" stroke-linecap="round" fill="none" class="draw"><path d="M400 260 L200 380"/><path d="M450 300 L370 400"/><path d="M510 300 L590 400"/><path d="M560 260 L760 380"/></g>
+        <g class="pop d2"><rect x="80" y="380" width="240" height="90" rx="18" fill="#fff"/><text x="200" y="415" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="20" fill="#22303a">Traffic</text><text x="200" y="445" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="20" fill="#22303a">Management</text></g>
+        <g class="pop d3"><rect x="260" y="400" width="200" height="90" rx="18" fill="#fff" opacity="0"/></g>
+        <g class="pop d3"><rect x="310" y="400" width="180" height="90" rx="18" fill="#fff"/><text x="400" y="435" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="20" fill="#22303a">Hydro</text><text x="400" y="465" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="20" fill="#22303a">Excavation</text></g>
+        <g class="pop d4"><rect x="510" y="400" width="180" height="90" rx="18" fill="#fff"/><text x="600" y="435" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="20" fill="#22303a">Civil</text><text x="600" y="465" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="20" fill="#22303a">Construction</text></g>
+        <g class="pop d5"><rect x="710" y="380" width="200" height="90" rx="18" fill="#fff"/><text x="810" y="415" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="20" fill="#22303a">Send It</text><text x="810" y="445" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="20" fill="#22303a">Marine</text></g>
+        <text x="480" y="80" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="40" fill="#fff" class="rise">One group. One call. The whole job.</text>
+      </svg>
+    </div>
+
+    <!-- SCENE 3: Traffic Management -->
+    <div class="scene" data-start="12" data-end="20" data-vo="Smooth Flow Traffic Management keeps traffic moving safely. Traffic plans, qualified controllers, signage and light tower hire, and pilot vehicles, for events, mine sites and road works.">
+      <svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="960" height="540" fill="#bfe6f5"/>
+        <g class="cloud" fill="#fff"><ellipse cx="150" cy="90" rx="70" ry="26"/><ellipse cx="190" cy="72" rx="50" ry="30"/><ellipse cx="700" cy="120" rx="60" ry="22"/><ellipse cx="1050" cy="90" rx="70" ry="26"/></g>
+        <rect y="300" width="960" height="240" fill="#7fbf4d"/>
+        <rect y="330" width="960" height="150" fill="#4b5057"/>
+        <g stroke="#fff" stroke-width="6" stroke-dasharray="40 30"><line x1="0" y1="405" x2="960" y2="405"/></g>
+        <!-- cones -->
+        <g fill="#ff7a1a">
+          <g class="pop d1"><path d="M160 470 l16 -60 h28 l16 60z"/><rect x="150" y="466" width="80" height="10" fill="#22303a"/><rect x="176" y="430" width="28" height="8" fill="#fff"/></g>
+          <g class="pop d2"><path d="M260 470 l16 -60 h28 l16 60z"/><rect x="250" y="466" width="80" height="10" fill="#22303a"/><rect x="276" y="430" width="28" height="8" fill="#fff"/></g>
+          <g class="pop d3"><path d="M360 470 l16 -60 h28 l16 60z"/><rect x="350" y="466" width="80" height="10" fill="#22303a"/><rect x="376" y="430" width="28" height="8" fill="#fff"/></g>
+        </g>
+        <!-- sign -->
+        <g class="rise d1"><rect x="700" y="340" width="10" height="130" fill="#22303a"/><rect x="640" y="250" width="130" height="90" rx="10" fill="#ffd23f"/><text x="705" y="285" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="22" fill="#22303a">ROAD</text><text x="705" y="315" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="22" fill="#22303a">WORK</text></g>
+        <!-- light tower -->
+        <g class="rise d2"><rect x="850" y="330" width="8" height="150" fill="#22303a"/><rect x="820" y="300" width="70" height="34" rx="6" fill="#22303a"/><g class="flash"><rect x="826" y="306" width="26" height="22" fill="#fff8b0"/><rect x="858" y="306" width="26" height="22" fill="#fff8b0"/></g><rect x="835" y="480" width="40" height="18" rx="4" fill="#ff7a1a"/></g>
+        <!-- traffic controller -->
+        <g class="rise" transform="translate(500 330)">
+          <g class="bob">
+            <rect x="-20" y="40" width="40" height="70" rx="8" fill="#ff7a1a"/>
+            <rect x="-20" y="55" width="40" height="10" fill="#e6e6e6"/><rect x="-20" y="80" width="40" height="10" fill="#e6e6e6"/>
+            <rect x="-16" y="108" width="14" height="40" fill="#2b3a48"/><rect x="2" y="108" width="14" height="40" fill="#2b3a48"/>
+            <circle cx="0" cy="18" r="22" fill="#f4c89c"/>
+            <path d="M-26 12 a26 26 0 0 1 52 0 h6 v6 h-64 v-6z" fill="#ffd23f"/>
+            <circle cx="-7" cy="18" r="3" fill="#22303a"/><circle cx="7" cy="18" r="3" fill="#22303a"/><path d="M-8 28 q8 8 16 0" stroke="#22303a" stroke-width="3" fill="none"/>
+            <rect x="-40" y="45" width="24" height="10" rx="5" fill="#f4c89c"/>
+            <g class="swing"><rect x="20" y="50" width="10" height="60" fill="#f4c89c"/><rect x="18" y="-10" width="14" height="66" rx="4" fill="#6b4a2b"/><circle cx="25" cy="-24" r="30" fill="#d32f2f"/><text x="25" y="-16" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="20" fill="#fff">STOP</text></g>
+          </g>
+        </g>
+        <!-- pilot ute -->
+        <g class="drive-slow"><g transform="translate(120 355)"><rect x="0" y="12" width="110" height="30" rx="6" fill="#fff"/><rect x="70" y="-6" width="40" height="30" rx="6" fill="#fff"/><rect x="76" y="0" width="28" height="18" fill="#bfe6f5"/><rect x="10" y="-8" width="50" height="18" rx="3" fill="#ffd23f"/><text x="35" y="6" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="11" fill="#22303a">PILOT</text><rect x="86" y="-14" width="10" height="8" fill="#ff9d00" class="blink"/><circle cx="25" cy="44" r="11" fill="#22303a"/><circle cx="90" cy="44" r="11" fill="#22303a"/></g></g>
+      </svg>
+      <div class="tag">Smooth Flow Traffic Management</div>
+      <div class="cap type">Keeping traffic moving safely<small>Traffic plans · controllers · signage &amp; light tower hire · pilot vehicles · events, mine sites &amp; road works</small></div>
+    </div>
+
+    <!-- SCENE 4: Hydro Excavations & Service Locating -->
+    <div class="scene" data-start="20" data-end="28" data-vo="Smooth Flow Hydro Excavations and Service Locating digs safe. We find and map what's underground first, then use non-destructive hydro vac digging to get the job done without damage.">
+      <svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="960" height="540" fill="#bfe6f5"/>
+        <rect y="260" width="960" height="60" fill="#7fbf4d"/>
+        <rect y="310" width="960" height="230" fill="#c58b4c"/>
+        <!-- underground services -->
+        <g class="rise d2"><rect x="0" y="400" width="960" height="18" fill="#1a8fa8"/><text x="60" y="414" font-family="Nunito" font-weight="800" font-size="13" fill="#fff">WATER</text></g>
+        <g class="rise d3"><rect x="0" y="450" width="960" height="14" fill="#ffd23f"/><text x="60" y="462" font-family="Nunito" font-weight="800" font-size="12" fill="#22303a">GAS</text></g>
+        <g class="rise d4"><rect x="0" y="490" width="960" height="12" fill="#ff7a1a"/><text x="60" y="500" font-family="Nunito" font-weight="800" font-size="11" fill="#fff">POWER</text></g>
+        <!-- hydro vac truck -->
+        <g class="rise" transform="translate(120 130)">
+          <rect x="140" y="30" width="300" height="100" rx="30" fill="#1a8fa8"/>
+          <rect x="150" y="45" width="280" height="30" rx="12" fill="#2aa8c4"/>
+          <text x="290" y="100" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="24" fill="#fff">HYDRO VAC</text>
+          <rect x="30" y="60" width="110" height="70" rx="10" fill="#ff7a1a"/><rect x="42" y="68" width="60" height="32" rx="4" fill="#cfefff"/>
+          <rect x="20" y="120" width="440" height="16" fill="#22303a"/>
+          <circle cx="70" cy="138" r="18" fill="#22303a"/><circle cx="70" cy="138" r="7" fill="#9aa5ae"/>
+          <circle cx="220" cy="138" r="18" fill="#22303a"/><circle cx="220" cy="138" r="7" fill="#9aa5ae"/>
+          <circle cx="300" cy="138" r="18" fill="#22303a"/><circle cx="300" cy="138" r="7" fill="#9aa5ae"/>
+          <circle cx="410" cy="138" r="18" fill="#22303a"/><circle cx="410" cy="138" r="7" fill="#9aa5ae"/>
+          <!-- boom + hose -->
+          <g class="arm"><rect x="430" y="40" width="160" height="14" rx="6" fill="#22303a"/></g>
+          <path d="M585 50 q40 60 40 130 v120" stroke="#2b3a48" stroke-width="18" fill="none" stroke-linecap="round"/>
+          <path d="M585 50 q40 60 40 130 v120" stroke="#3aa0c9" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="12 12" class="jet"/>
+        </g>
+        <!-- hole -->
+        <ellipse cx="745" cy="440" rx="70" ry="60" fill="#8a5a2c"/>
+        <ellipse cx="745" cy="440" rx="50" ry="40" fill="#5c3a19"/>
+        <g class="pulse" fill="#8fd7ef" opacity=".8"><circle cx="745" cy="430" r="26"/></g>
+        <!-- spray drops -->
+        <g fill="#8fd7ef" class="bob"><circle cx="700" cy="380" r="6"/><circle cx="790" cy="370" r="5"/><circle cx="760" cy="360" r="4"/></g>
+        <!-- locator worker -->
+        <g class="rise d1" transform="translate(880 200)">
+          <g class="bob"><rect x="-16" y="30" width="32" height="50" rx="6" fill="#ffd23f"/><rect x="-14" y="78" width="12" height="30" fill="#2b3a48"/><rect x="2" y="78" width="12" height="30" fill="#2b3a48"/><circle cx="0" cy="14" r="17" fill="#f4c89c"/><path d="M-20 10 a20 20 0 0 1 40 0 v4 h-40z" fill="#fff"/><circle cx="-6" cy="14" r="2.5" fill="#22303a"/><circle cx="6" cy="14" r="2.5" fill="#22303a"/><rect x="-40" y="40" width="26" height="8" rx="4" fill="#f4c89c"/><rect x="-46" y="46" width="8" height="60" fill="#22303a"/><rect x="-60" y="102" width="36" height="8" rx="4" fill="#ff7a1a"/></g>
+        </g>
+        <g class="pulse" fill="#ff7a1a" opacity=".6"><circle cx="838" cy="400" r="16"/></g>
+      </svg>
+      <div class="tag">Smooth Flow Hydro Excavations &amp; Service Locating</div>
+      <div class="cap type">Dig safe. Find what's underground first.<small>Hydro vac non-destructive digging · underground service locating &amp; mapping · utility installs &amp; tight-access work</small></div>
+    </div>
+
+    <!-- SCENE 5: Send It Marine -->
+    <div class="scene" data-start="28" data-end="35" data-vo="Send It Marine is on the water when it counts. Sunken boat recovery and salvage, vessel transport, flood recovery, and bridge and wharf inspections.">
+      <svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="960" height="540" fill="#eaf7fd"/>
+        <path d="M0 200 Q240 140 480 190 T960 170 V300 H0Z" fill="#5a9c33"/>
+        <g class="rise d1"><rect x="80" y="130" width="12" height="70" fill="#8a5a2c"/><circle cx="86" cy="118" r="34" fill="#4f8a3a"/></g>
+        <g class="rise d2"><rect x="840" y="120" width="12" height="70" fill="#8a5a2c"/><circle cx="846" cy="106" r="34" fill="#4f8a3a"/></g>
+        <!-- bridge -->
+        <g class="rise"><rect x="300" y="235" width="360" height="16" fill="#6b7680"/><rect x="330" y="251" width="14" height="70" fill="#6b7680"/><rect x="470" y="251" width="14" height="70" fill="#6b7680"/><rect x="610" y="251" width="14" height="70" fill="#6b7680"/></g>
+        <!-- river -->
+        <rect y="280" width="960" height="260" fill="#3aa0c9"/>
+        <g class="wave" stroke="#8fd7ef" stroke-width="5" stroke-linecap="round" fill="none"><path d="M60 330 q20 -10 40 0 t40 0 t40 0 t40 0"/><path d="M600 350 q20 -10 40 0 t40 0 t40 0"/><path d="M200 470 q20 -10 40 0 t40 0 t40 0"/><path d="M700 480 q20 -10 40 0 t40 0 t40 0"/></g>
+        <!-- sunken boat being lifted -->
+        <g class="lift"><g transform="translate(600 380)"><path d="M0 20 h140 l-20 40 h-100z" fill="#c9c9c9"/><rect x="50" y="-10" width="40" height="30" fill="#e6e6e6"/><path d="M5 25 h130" stroke="#3aa0c9" stroke-width="4" stroke-dasharray="6 8"/></g></g>
+        <!-- recovery boat -->
+        <g class="bob" transform="translate(180 340)">
+          <path d="M0 40 h260 q30 0 40 -30 l-300 0z" fill="#ff7a1a"/>
+          <path d="M0 40 h300 l-20 36 h-260z" fill="#22303a"/>
+          <rect x="60" y="-30" width="100" height="70" rx="10" fill="#1a8fa8"/><rect x="72" y="-20" width="76" height="28" rx="4" fill="#cfefff"/>
+          <text x="150" y="30" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="20" fill="#fff">SEND IT</text>
+          <!-- crane arm -->
+          <g class="arm"><rect x="180" y="-40" width="170" height="12" rx="6" fill="#22303a"/></g>
+          <rect x="176" y="-60" width="12" height="100" fill="#22303a"/>
+          <!-- skipper -->
+          <circle cx="110" cy="-48" r="14" fill="#f4c89c"/><path d="M92 -52 a18 18 0 0 1 36 0z" fill="#ff7a1a"/><circle cx="106" cy="-48" r="2" fill="#22303a"/><circle cx="114" cy="-48" r="2" fill="#22303a"/>
+        </g>
+        <path class="rope" d="M520 300 v80" stroke="#22303a" stroke-width="4"/>
+        <!-- life ring -->
+        <g class="bob"><circle cx="880" cy="420" r="22" fill="#fff" stroke="#d32f2f" stroke-width="8" stroke-dasharray="17 17"/></g>
+        <!-- birds -->
+        <g stroke="#22303a" stroke-width="3" fill="none" class="cloud"><path d="M700 80 q10 -10 20 0 q10 -10 20 0"/><path d="M750 60 q10 -10 20 0 q10 -10 20 0"/></g>
+      </svg>
+      <div class="tag">Send It Marine</div>
+      <div class="cap type">On the water when it counts<small>Sunken boat recovery &amp; salvage · vessel transport · flood recovery · bridge &amp; wharf inspections · watercraft hire</small></div>
+    </div>
+
+    <!-- SCENE 6: Civil / earthmoving / transport -->
+    <div class="scene" data-start="35" data-end="40" data-vo="And our civil construction team handles the earthworks: trenching, land clearing, subdivisions and dust suppression, with an ISO-certified, GPS-tracked fleet.">
+      <svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="960" height="540" fill="#bfe6f5"/>
+        <rect y="330" width="960" height="210" fill="#c58b4c"/>
+        <path d="M0 330 Q200 300 400 330 T800 330 T960 330 V360 H0Z" fill="#8a5a2c"/>
+        <!-- dirt pile -->
+        <g class="rise d2"><path d="M560 340 q80 -90 180 0z" fill="#8a5a2c"/></g>
+        <!-- excavator -->
+        <g class="rise" transform="translate(180 200)">
+          <rect x="0" y="110" width="200" height="34" rx="17" fill="#22303a"/>
+          <g fill="#6b7680"><circle cx="30" cy="127" r="10"/><circle cx="70" cy="127" r="10"/><circle cx="110" cy="127" r="10"/><circle cx="150" cy="127" r="10"/></g>
+          <rect x="20" y="70" width="170" height="44" rx="8" fill="#ffd23f"/>
+          <rect x="30" y="20" width="80" height="60" rx="10" fill="#ff7a1a"/><rect x="40" y="28" width="50" height="34" rx="4" fill="#cfefff"/>
+          <g class="arm"><rect x="120" y="50" width="180" height="20" rx="8" fill="#ffd23f"/><g transform="translate(290 55)"><rect x="0" y="0" width="16" height="90" rx="6" fill="#ffd23f"/><path d="M-10 90 h50 l-10 40 h-30z" fill="#22303a"/></g></g>
+        </g>
+        <!-- tipper -->
+        <g class="drive-slow"><g transform="translate(560 250)"><path d="M0 20 h150 v60 h-160z" fill="#1a8fa8"/><rect x="150" y="30" width="60" height="50" rx="8" fill="#ff7a1a"/><rect x="160" y="36" width="34" height="22" rx="3" fill="#cfefff"/><rect x="-14" y="80" width="230" height="10" fill="#22303a"/><circle cx="20" cy="94" r="14" fill="#22303a"/><circle cx="60" cy="94" r="14" fill="#22303a"/><circle cx="180" cy="94" r="14" fill="#22303a"/></g></g>
+        <!-- badges -->
+        <g class="pop d3"><rect x="40" y="40" width="270" height="56" rx="28" fill="#22303a"/><text x="175" y="76" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="22" fill="#fff">ISO-certified</text></g>
+        <g class="pop d4"><rect x="340" y="40" width="270" height="56" rx="28" fill="#22303a"/><text x="475" y="76" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="22" fill="#fff">Own fleet, GPS tracked</text></g>
+        <g class="pop d5"><rect x="640" y="40" width="270" height="56" rx="28" fill="#22303a"/><text x="775" y="76" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="22" fill="#fff">Safety first</text></g>
+      </svg>
+      <div class="tag">Civil Construction</div>
+      <div class="cap type">Civil and commercial earthworks<small>Trenching · land clearing · subdivisions · dust suppression · tight-access excavation</small></div>
+    </div>
+
+    <!-- SCENE 7: Close -->
+    <div class="scene" data-start="40" data-end="46" data-vo="Smooth Flow Group. Safety, sustainability, growth. Head office in Berri, depot in Murray Bridge, servicing all of South Australia.">
+      <svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="960" height="540" fill="#22303a"/>
+        <circle cx="480" cy="180" r="90" fill="#ff7a1a" class="pop"/>
+        <text x="480" y="172" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="28" fill="#fff" class="pop">SMOOTH</text>
+        <text x="480" y="206" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="28" fill="#fff" class="pop">FLOW</text>
+        <text x="480" y="320" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="44" fill="#fff" class="rise d1">Safety. Sustainability. Growth.</text>
+        <text x="480" y="380" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="22" fill="#ffd23f" class="rise d2">Head office Berri · Depot Murray Bridge · Servicing all of SA</text>
+        <text x="480" y="440" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="26" fill="#8fd7ef" class="rise d3">(08) 5117 3082 · smoothflowgroup.com.au</text>
+      </svg>
+    </div>
+
+    <div class="overlay" id="overlay">
+      <div class="play"><svg viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="btn">Play</button>
+    <button class="btn ghost" id="voice" aria-pressed="true">Voice on</button>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <div class="time" id="time">0:00 / 0:46</div>
+  </div>
+  <p class="notes">Runs ~40 seconds of story plus a closing card. The voiceover uses your device's built-in speech voice (an Australian English voice where one is installed), so it will sound a little different on each phone or computer. Divisions and services are taken from smoothflowgroup.com.au.</p>
+</div>
+
+<script>
+(function(){
+  const scenes=[...document.querySelectorAll('.scene')].map(el=>({el,start:+el.dataset.start,end:+el.dataset.end}));
+  const DUR=46, fill=document.getElementById('fill'), time=document.getElementById('time'),
+        btn=document.getElementById('btn'), overlay=document.getElementById('overlay');
+  let t0=null, raf=null, playing=false, cur=null;
+  const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+  const voiceBtn=document.getElementById('voice'); let voiceOn=true;
+  const synth=window.speechSynthesis;
+  function pickVoice(){ if(!synth) return null; const vs=synth.getVoices(); return vs.find(v=>/en[-_]AU/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||vs[0]||null; }
+  function say(text){ if(!synth||!voiceOn||!text) return; try{ synth.cancel(); const u=new SpeechSynthesisUtterance(text); const v=pickVoice(); if(v) u.voice=v; u.rate=1.02; u.pitch=1; synth.speak(u);}catch(e){} }
+  voiceBtn.addEventListener('click',()=>{ voiceOn=!voiceOn; voiceBtn.textContent=voiceOn?'Voice on':'Voice off'; voiceBtn.setAttribute('aria-pressed',voiceOn); if(!voiceOn&&synth) synth.cancel(); });
+  if(synth&&!('speechSynthesis' in window)) voiceBtn.hidden=true;
+  function show(i,speak){ if(cur===i) return; scenes.forEach((s,j)=>s.el.classList.toggle('active',j===i)); cur=i; if(speak) say(scenes[i].el.dataset.vo); }
+  function frame(now){
+    if(!playing) return;
+    const t=Math.min((now-t0)/1000,DUR);
+    const i=scenes.findIndex(s=>t>=s.start&&t<s.end);
+    if(i>=0) show(i,true);
+    fill.style.width=(t/DUR*100)+'%'; time.textContent=fmt(t)+' / '+fmt(DUR);
+    if(t>=DUR){ playing=false; if(synth) synth.cancel(); btn.textContent='Replay'; overlay.hidden=false; return; }
+    raf=requestAnimationFrame(frame);
+  }
+  function start(){
+    cancelAnimationFrame(raf); if(synth) synth.cancel(); cur=null; scenes.forEach(s=>s.el.classList.remove('active'));
+    overlay.hidden=true; btn.textContent='Restart'; playing=true;
+    t0=performance.now(); raf=requestAnimationFrame(frame);
+  }
+  btn.addEventListener('click',start); overlay.addEventListener('click',start);
+  // resting frame: show the title scene so the page is not blank
+  show(0);
+})();
+</script>
